@@ -27,4 +27,4 @@ bin/pngdefry
 tests/output/*
 node_modules
 .DS_Store
-
+.idea/
