@@ -5,7 +5,7 @@ var spawn = require('child_process').spawn;
 var base_dir = __dirname;
 var pngdefry_src_path = base_dir + "/pngdefry-master";
 //Everything seems ok.
-//Rename pngdefry path 
+//Rename pngdefry path
 //Let's configure the tool
 try {
     process.chdir(pngdefry_src_path);
@@ -25,7 +25,7 @@ pngdefry_config.on('exit', function (code, signal) {
             if (code != null) {
                 var pngdefry_make_install = spawn('make', ['install']);
                 pngdefry_make_install.on('exit', function (code, signal) {
-                    
+
                 });
                 pngdefry_make_install.on("error", function (err) {
                     console.log(err)
