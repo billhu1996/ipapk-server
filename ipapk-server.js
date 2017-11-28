@@ -96,7 +96,8 @@ excuteDB("CREATE TABLE IF NOT EXISTS info (\
   name TEXT,\
   uploadTime datetime default (datetime('now', 'localtime')),\
   platform TEXT,\
-  changelog TEXT\
+  changelog TEXT,\
+  remoteURL TEXT\
   )");
 /**
  * Main program.
@@ -180,16 +181,15 @@ function main() {
     });
 
     app.get('/plist/:guid', function(req, res) {
-        queryDB("select name,bundleID from info where guid=?", [req.params.guid], function(error, result) {
+        queryDB("select name,bundleID, remoteURL from info where guid=?", [req.params.guid], function(error, result) {
             if (result) {
                 fs.readFile(path.join(__dirname, 'templates') + '/template.plist', function(err, data) {
                     if (err) throw err;
                     var template = data.toString();
                     var rendered = mustache.render(template, {
-                        guid: req.params.guid,
                         name: result[0].name,
                         bundleID: result[0].bundleID,
-                        basePath: basePath,
+                        ipaPath: result[0].remoteURL || basePath + '/ipa/' + req.params.guid + '.ipa'
                     });
                     res.set('Content-Type', 'text/plain; charset=utf-8');
                     res.set('Access-Control-Allow-Origin','*');
@@ -227,6 +227,40 @@ function main() {
                     res.send(info)
                 })
 
+            }, error => {
+                errorHandler(error,res)
+            });
+        });
+    });
+
+
+    app.post('/upload/by/url', function(req, res) {
+        var form = new multiparty.Form();
+        form.parse(req, function(err, fields, files) {
+            if (err) {
+                errorHandler(err, res);
+                return;
+            }
+            var changelog, remoteURL, bundleID, version, name;
+            if (fields.changelog) {
+                changelog = fields.changelog[0] || "";
+            }
+            if (fields.remoteURL) {
+                remoteURL = fields.remoteURL[0];
+            }
+            if (fields.bundleID) {
+                bundleID = fields.bundleID[0];
+            }
+            if (fields.version) {
+                version = fields.version[0];
+            }
+            if (fields.name) {
+                name = fields.name[0];
+            }
+
+            insertAppURLToDb(remoteURL, changelog, bundleID, version, name, info => {
+                console.log(info)
+                res.send(info)
             }, error => {
                 errorHandler(error,res)
             });
@@ -282,6 +316,36 @@ function parseAppAndInsertToDb(filePath, changelog, callback, errorCallback) {
     }, reason => {
         errorCallback(reason)
     })
+}
+
+function insertAppURLToDb(remoteURL, changelog, bundleID, version, name, callback, errorCallback) {
+    var guid = uuidV4();
+    var platform;
+    if (path.extname(remoteURL) === ".ipa") {
+        platform = "ios"
+    } else if (path.extname(filePath) === ".apk") {
+        platform = "android"
+    } else {
+        errorCallback("params error")
+        return;
+    }
+    var info = {}
+    info["platform"] = platform,
+        info["guid"] = guid,
+        info["remoteURL"] = remoteURL,
+        info["changelog"] = changelog,
+        info["bundleID"] = bundleID,
+        info["version"] = version,
+        info["name"] = name
+
+    excuteDB("INSERT INTO info (guid, platform, bundleID, version, name, changelog, remoteURL) VALUES (?, ?, ?, ?, ?, ?, ?);",
+        [info["guid"], info["platform"], info["bundleID"], info["version"], info["name"], info["changelog"], info["remoteURL"]], function(error){
+            if (!error){
+                callback(info)
+            } else {
+                errorCallback(error)
+            }
+        })
 }
 
 function storeApp(fileName, guid, callback) {

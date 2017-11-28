@@ -28,7 +28,7 @@ function loadApps(){
 						'<img src="'+val.icon+'" alt="">'+
 						'<div class="info_box">'+
 							'<span class="app_name">'+val.name+
-							'</span><span class="version_number">'+val.version+'  '+val.build+'</span><br>'+
+							'</span><span class="version_number">'+val.version+'  '+val.id+'</span><br>'+
 							'<span>更新:</span>'+
 							'<span class="update_time">'+val.uploadTime+'</span>'+
 							'<br><span class="changelog">'+(val.changelog ? val.changelog : "")+'</span>'+
@@ -69,10 +69,10 @@ function loadMoreVersion(el) {
 				return;
 			}
 			$.each(version,function(index,val){
-				var versionLists = 
+				var versionLists =
 				'<li data="'+val.url+'" >'+
 					'<img src="'+val.icon+'" alt="">'+
-					'<p><span class="app_name">'+val.name+'</span><span class="version_number">'+val.version+'  '+val.build+'</span></p><p><span>更新：</span><span class="update_time">'+val.uploadTime+'</span></p><p><span class="changelog">'+(val.changelog ? val.changelog : "")+'</span></p>'+
+					'<p><span class="app_name">'+val.name+'</span><span class="version_number">'+val.version+'  '+val.id+'</span></p><p><span>更新：</span><span class="update_time">'+val.uploadTime+'</span></p><p><span class="changelog">'+(val.changelog ? val.changelog : "")+'</span></p>'+
 				'</li>';
 				thisVersionInfo.append(versionLists);
 			});
